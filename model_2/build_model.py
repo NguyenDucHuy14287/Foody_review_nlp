@@ -67,4 +67,4 @@ def dump_model():
         for i in range(7):
                 build_model(i,data)
 
-
+dump_model()
