@@ -36,13 +36,15 @@ def process_data(data,export_add):
 
 def handle_data():
     #read raw data from csv file
-    raw_data = pd.read_csv('data_first100.csv',sep=',',keep_default_na=False)
+    raw_data = pd.read_csv('data.csv',sep=',',keep_default_na=False)
 
     #spit data into train and test dataset 
     train_set, test_set = train_test_split(raw_data, test_size=0.2,shuffle=True)
 
     #pre-processing and dum data to csv
-    process_data(train_set,"model_2\\train_data.csv")
-    process_data(test_set,"model_2\\test_data.csv")
+    process_data(train_set,"model_2/train_data.csv")
+    process_data(test_set,"model_2/test_data.csv")
 
     print("successful")
+
+handle_data()
