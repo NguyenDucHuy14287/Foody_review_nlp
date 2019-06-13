@@ -46,7 +46,8 @@ def caculate_accuracy_single_label(X,true_label,model):
     accuracy = accuracy_score(true_label, predict_label) 
     return accuracy
 
-def caculate_accuracy_multi_label(data,model_food,model_drink,model_price,model_staff,model_service,model_space,model_hygiene):
+def caculate_accuracy_multi_label(data,model_food,model_drink,model_price,
+                        model_staff,model_service,model_space,model_hygiene):
     comment_var = list(data.comment)
     food_label = list(data.food)
     drink_label = list(data.drink)
@@ -55,9 +56,29 @@ def caculate_accuracy_multi_label(data,model_food,model_drink,model_price,model_
     service_label = list(data.service)
     space_label = list(data.space)
     hygiene_label = list(data.hygiene)
+    length = len(comment_var)
 
+    predict_food_label = list(model_food.predict(comment_var))
+    predict_drink_label = list(model_drink.predict(comment_var))
+    predict_price_label = list(model_price.predict(comment_var))
+    predict_staff_label = list(model_staff.predict(comment_var))
+    predict_service_label = list(model_service.predict(comment_var))
+    predict_space_label = list(model_space.predict(comment_var))
+    predict_hygiene_label = list(model_hygiene.predict(comment_var))
+
+    s = 0
+
+    for i in range(length):
+        if (predict_food_label[i] == food_label[i] and
+            predict_drink_label[i] == drink_label[i] and
+            predict_price_label[i] == price_label[i] and
+            predict_staff_label[i] == staff_label[i] and
+            predict_service_label[i] == service_label[i] and
+            predict_space_label[i] == space_label[i] and
+            predict_hygiene_label[i] == hygiene_label[i]):
+            s = s + 1
     
-
+    accuracy = s/length
     return accuracy
 
 def test():
@@ -86,7 +107,8 @@ def test():
     accuracy_service = caculate_accuracy_single_label(comment_var,service_label,model_service)
     accuracy_space   = caculate_accuracy_single_label(comment_var,space_label,model_space)
     accuracy_hygiene = caculate_accuracy_single_label(comment_var,hygiene_label,model_hygiene)
-    accuracy_all = caculate_accuracy_multi_label(data,model_food,model_drink,model_price,model_staff,model_service,model_space,model_hygiene)
+    accuracy_all = caculate_accuracy_multi_label(data,model_food,model_drink,model_price,
+                                    model_staff,model_service,model_space,model_hygiene)
     print("Accuracy for single Food label: " + str(accuracy_food))
     print("Accuracy for single Drink label: " + str(accuracy_drink))
     print("Accuracy for single Price label: " + str(accuracy_price))
