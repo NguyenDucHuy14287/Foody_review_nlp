@@ -1,128 +1,135 @@
-import pre_processing
-from joblib import load
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer, TfidfVectorizer
-from sklearn.metrics import accuracy_score
-import pandas as pd 
+import pandas as pd
+import re
+import string
+from pyvi import ViTokenizer
 
-def test_model():
-    model_food = load('model_food.dat3') 
-    model_drink = load('model_drink.dat3') 
-    model_price = load('model_price.dat3') 
-    model_staff = load('model_staff.dat3') 
-    model_service = load('model_service.dat3') 
-    model_space = load('model_space.dat3') 
-    model_hygiene = load('model_hygiene.dat3') 
+#remove special charaters
+def remove_symbol(text):
+     remove_list =[
+                    #remove symbol and down the line
+                    '👹', '👻', '💃','🤙', '👍','💄', '💎', '💩','😕', '😱',
+                    '😸','😾', '🚫',  '🤬','🧚', '🧡','🐶','👎', '😣','✨', '❣','☀',
+                    '♥', '🤩', '💌','🤣', '🖤', '🤤', ':(', '😢',
+                    '❤', '😍', '😘', '😪', '😊','?', '😁', '💖', '😟', '😭',
+                    '💯', '💗', '♡', '💜', '🤗','^^', '😨', '☺', '💋', '👌',
+                    '😖', '😀', ':((', '😡', '😠','😒', '🙂', '😏', '😝', '😄',
+                    '😙', '😤', '😎', '😆', '💚','✌', '💕', '😞', '😓', '️🆗️',
+                    '😉', '😂', ':v', '=))', '😋','💓', '😐', ':3', '😫', '😥',
+                    '😃', '😬' ,' 😬 ', '😌', ' 😌 ', '💛', '🤝', '🎈',
+                    '😗', '🤔', '😑', '🔥', '🙏','🆗', '😻', '💙', '💟',
+                    '😚', '❌', '👏', ';)', '<3','🌝',  '🌷', '🌸', '🌺',
+                    '🌼', '🍓', '🐅', '🐾', '👉','💐', '💞', '💥', '💪',
+                    '💰',  '😇', '😛', '😜','🙃', '🤑', '🤪','☹',  '💀',
+                    '😔', '😧', '😩', '😰', '😳','😵', '😶', '🙁','🍰','🍹','🏨','🎪','☕',
+                    '🌲','⛅','🌞','🍑','🍐','🌻','😅', '🏻','🎉️','🌹','🌟','😹','🍂','👀',
+                    '🍞','👯','👄','🍧','🍽','🏿','💸','🏼','🏽','🏡','📍','⛳','😈','🙌',
+                    '🏾','👧','🚩', '📝','🏠','🍬','❤️','✔','\n']
+     for k in remove_list:
+          text = text.replace(k,' ')
+     return text
 
-    cont = True
-    while (cont):
-        content = input("Type comment here: ")
-        content = pre_processing.string_preprocessing(content)
-        food_label = model_food.predict([content])
-        drink_label = model_drink.predict([content])
-        price_label = model_price.predict([content])
-        staff_label = model_staff.predict([content])
-        service_label = model_service.predict([content])
-        space_label = model_space.predict([content])
-        hygiene_label = model_hygiene.predict([content])
-        if (food_label==1):
-            print("food, ")
-        if (drink_label==1):
-            print("drink, ")
-        if (price_label==1):
-            print("price, ")
-        if (staff_label==1):
-            print("staff, ")
-        if (service_label==1):
-            print("service, ")
-        if (space_label==1):
-            print("space, ")
-        if (hygiene_label==1):
-            print("hygiene, ") 
-        if (input("Do you want to continue? ") == "no"):
-            cont = False
+#replace abbreviation, wrong letter, wrong spelling, english
+def replace_word(text):
+     replace_list = {
+                    #wrong spelling, teen code
+                    'òa': 'oà', 'óa': 'oá', 'ỏa': 'oả', 'õa': 'oã', 'ọa': 'oạ', 'òe': 'oè',
+                     'óe': 'oé','ỏe': 'oẻ', 'õe': 'oẽ', 'ọe': 'oẹ', 'ùy': 'uỳ', 'úy': 'uý',
+                     'ủy': 'uỷ', 'ũy': 'uỹ','ụy': 'uỵ', 'uả': 'ủa', 'ả': 'ả', 'ố': 'ố',
+                     'u´': 'ú','ỗ': 'ỗ', 'ồ': 'ồ', 'ổ': 'ổ', 'ấ': 'ấ', 'ẫ': 'ẫ',
+                     'ẩ': 'ẩ', 'ầ': 'ầ', 'ỏ': 'ỏ', 'ê`': 'ề','ễ': 'ễ', 'ắ': 'ắ', 
+                     'ủ': 'ủ', 'ế': 'ế', 'ở': 'ở', 'ỉ': 'ỉ', 'ẻ': 'ẻ', 'àk': 'à',
+                     'ak`': 'à','gía': 'giá', 
+                     'a`': 'à', 'iˋ': 'ì', 'ă´': 'ắ','ử': 'ử', 'e˜': 'ẽ', 'y˜': 'ỹ',
+                     'a´': 'á', ' rũ ': ' rủ ',
+                     #abbreviation
+                     ' ùi ':' rồi ', ' rùi ': ' rồi ', ' ròi ': ' rồi ', ' roài ':' rồi ', ' km ': ' khuyến mãi ',
+                     ' hnai': ' hôm nay ', ' hnay': ' hôm nay ', '0k ': ' giá cả ','1k ': ' giá cả ',
+                     '2k ': ' giá cả ','3k ': ' giá cả ','4k ': ' giá cả ','5k ': ' giá cả ',
+                     '6k ': ' giá cả ','7k ': ' giá cả ','8k ': ' giá cả ','9k ': ' giá cả ',
+                     ' k ': ' không ', ' nv ': ' nhân viên ', ' cfe ': ' cafe ', ' cphe ': ' cafe ',
+                     ' caphe ': ' cafe ', ' bt ': ' bình thường ', ' ko ': ' không ',' đôg uống ':' đồ uống ',
+                     ' ae ': ' anh em ', ' ce ':' chị em ', ' ace ': ' anh chị em ', ' vs ': ' với ',
+                     ' nt ': ' nhắn tin ', ' mik ': ' mình ', ' cf ': ' cafe ',
+                     ' như v ': ' như vậy ', ' rẻ ': ' giá cả ', ' mắc ': ' giá cả ',
+                     #english
+                     'boardgame': 'trò chơi trên bàn', 'dilivery': 'giao hàng',
+                     'fre': 'miễn phí', 'free': 'miễn phí', 'order': 'đặt hàng',
+                     'sandwich': 'bánh mì', 'hamburger': 'bánh mì', 'matcha': 'nước uống',
+                     ' decor ': ' trang trí ', ' ok': ' ổn ', ' take away': ' mang đi ', 'smothies': 'nước uống',
+                     'americano': 'nước uống',  ' ice blended ': ' nước uống ', ' cokie cream ': ' nước uống ',   
+                     ' milk tea ': ' nước uống ', ' cocktail': ' nước uống ', ' puding ': ' bánh ', ' flan ': ' bánh ',
 
-def caculate_accuracy_single_label(X,true_label,model):
-    predict_label = list(model.predict(X))
-    accuracy = accuracy_score(true_label, predict_label) 
-    return accuracy
+                     }
+     for k, v in replace_list.items():
+          text = text.replace(k, v)
+     return text
 
-def caculate_accuracy_multi_label(data,model_food,model_drink,model_price,
-                        model_staff,model_service,model_space,model_hygiene):
-    comment_var = list(data.comment)
-    food_label = list(data.food)
-    drink_label = list(data.drink)
-    price_label = list(data.price)
-    staff_label = list(data.staff)
-    service_label = list(data.service)
-    space_label = list(data.space)
-    hygiene_label = list(data.hygiene)
-    length = len(comment_var)
+#remove nonsense words
+def remove_nonsense_word(text):
+     remove_list = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                    'hi hi', 'hì hì', 'he he', 'ha ha', 'hê hê', 'há há', 'hề hề', 'hè hè',
+                    'bình thường'
+                    ]
+     for k in remove_list:
+          text = text.replace(k,' ')
+     return text
 
-    predict_food_label = list(model_food.predict(comment_var))
-    predict_drink_label = list(model_drink.predict(comment_var))
-    predict_price_label = list(model_price.predict(comment_var))
-    predict_staff_label = list(model_staff.predict(comment_var))
-    predict_service_label = list(model_service.predict(comment_var))
-    predict_space_label = list(model_space.predict(comment_var))
-    predict_hygiene_label = list(model_hygiene.predict(comment_var))
+#remove redundant space
+def remove_space_redundant(text):
+     text = text.strip()
+     text = re.sub(' +', ' ',text)
+     return text
 
-    s = 0
 
-    for i in range(length):
-        if (predict_food_label[i] == food_label[i] and
-            predict_drink_label[i] == drink_label[i] and
-            predict_price_label[i] == price_label[i] and
-            predict_staff_label[i] == staff_label[i] and
-            predict_service_label[i] == service_label[i] and
-            predict_space_label[i] == space_label[i] and
-            predict_hygiene_label[i] == hygiene_label[i]):
-            s = s + 1
-    
-    accuracy = s/length
-    return accuracy
+#remove stopword
+def remove_stopword(text):
+     # read stopword from csv
+     stopword = pd.read_csv('stop_word.csv',sep=',',keep_default_na=False)
+     stopword_var = list(stopword)
+     for k in stopword_var:
+          k = ' ' + k + ' '
+          text = ' ' + text + ' '
+          text = text.replace(k,' ')
+     return text
 
-def test():
-    data = pd.read_csv('test_data.csv',sep=',',keep_default_na=False)
-    comment_var = list(data.comment)
-    food_label = list(data.food)
-    drink_label = list(data.drink)
-    price_label = list(data.price)
-    staff_label = list(data.staff)
-    service_label = list(data.service)
-    space_label = list(data.space)
-    hygiene_label = list(data.hygiene)
+#preprocessing a string
+def string_preprocessing(text):
+     #lowercase all string
+     text = text.lower()   
 
-    model_food = load('model_food.dat3') 
-    model_drink = load('model_drink.dat3') 
-    model_price = load('model_price.dat3') 
-    model_staff = load('model_staff.dat3') 
-    model_service = load('model_service.dat3') 
-    model_space = load('model_space.dat3') 
-    model_hygiene = load('model_hygiene.dat3') 
+     #remove symbols
+     text = remove_symbol(text)
 
-    accuracy_food   = caculate_accuracy_single_label(comment_var,food_label,model_food)
-    accuracy_drink  = caculate_accuracy_single_label(comment_var,drink_label,model_drink)
-    accuracy_price  = caculate_accuracy_single_label(comment_var,price_label,model_price)
-    accuracy_staff  = caculate_accuracy_single_label(comment_var,staff_label,model_staff)
-    accuracy_service = caculate_accuracy_single_label(comment_var,service_label,model_service)
-    accuracy_space   = caculate_accuracy_single_label(comment_var,space_label,model_space)
-    accuracy_hygiene = caculate_accuracy_single_label(comment_var,hygiene_label,model_hygiene)
-    accuracy_all = caculate_accuracy_multi_label(data,model_food,model_drink,model_price,
-                                    model_staff,model_service,model_space,model_hygiene)
-    print("Accuracy for single Food label: " + str(accuracy_food))
-    print("Accuracy for single Drink label: " + str(accuracy_drink))
-    print("Accuracy for single Price label: " + str(accuracy_price))
-    print("Accuracy for single Staff label: " + str(accuracy_staff))
-    print("Accuracy for single Service label: " + str(accuracy_service))
-    print("Accuracy for single Space label: " + str(accuracy_space))
-    print("Accuracy for single Hygiene label: " + str(accuracy_hygiene))
-    print("Accuracy for multi label: " + str(accuracy_all))
+     #remove punctuation
+     translator = str.maketrans(string.punctuation, ' ' * len(string.punctuation))
+     text = text.translate(translator)
 
-def run():
-        test()
+     #remove long string (like "rất ngonnnnnnnnnnnnnnnnnnnn")
+     text = re.sub(r'([A-Z])\1+', lambda m: m.group(1).lower(), text, flags=re.IGNORECASE)  
 
-run()
+     #replace wrong spelling, wrong letter
+     text = replace_word(text)
 
+     #remove nonsense data
+     text = remove_nonsense_word(text)
+
+     #remove redundant space
+     # text = remove_space_redundant(text)
+
+     #remove stop word
+     # text= remove_stopword(text)
+
+     #Token using library of PyVi
+     text = ViTokenizer.tokenize(text)
+
+     return text
+
+#preprocessing list of data
+def data_preprocessing(list_data):
+     length = len(list_data)
+     for i in range(length):
+          list_data[i] = string_preprocessing(list_data[i])
+     return list_data
 
 
 
