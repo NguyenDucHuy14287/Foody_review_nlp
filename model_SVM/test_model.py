@@ -16,7 +16,7 @@ def test_model():
     cont = True
     while (cont):
         content = input("Type comment here: ")
-        content = pre_processing.string_preprocessing(content)
+        content = pre_processing.t(content)
         food_label = model_food.predict([content])
         drink_label = model_drink.predict([content])
         price_label = model_price.predict([content])
